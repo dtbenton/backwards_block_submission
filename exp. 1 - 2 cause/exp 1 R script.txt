@@ -1,0 +1,248 @@
+########################################################
+#############                              #############
+#############           Initial SET UP     #############
+#############                              #############
+########################################################
+
+# import "2_cause_CSV.csv"
+D = read.csv(file.choose(), header = TRUE)
+
+# convert data from "wide" to "tall" format
+D_tall = reshape(D, varying = 3:18, v.names = "measure", timevar = "condition", idvar = "ID", new.row.names = 1:960, direction = "long")
+
+# order by ID
+D_tall = D_tall[order(D_tall$ID),]
+
+# remove scientific notation
+options(scipen=999)
+
+# add a binary column to the data frame
+
+D_tall$measure.bin = rep(0, 960)
+for(i in 1:960){
+  bin.measure = ifelse(D_tall$measure[i]>=50,1,0)
+  D_tall$measure.bin[i] = bin.measure
+}
+
+# install boostrap library
+library(boot)
+
+########################################################
+#############                              #############
+#############      Assumption Checks       #############
+#############                              #############
+########################################################
+
+##==> Normality check <==##
+
+# plot the histograms
+par(mfrow=c(4,4)) 
+for (ii in 1:16)  hist(D_tall$measure[D_tall$condition==ii], breaks=5)
+par(mfrow=c(1,1)) 
+
+# formal test of normality
+shapiro.ps = rep(0,16)
+for(i in 1:16) {
+  shap.calc = shapiro.test(D_tall$measure[D_tall$condition==i])
+  shapiro.ps[i] = shap.calc$p.value
+}
+
+shapiro.mat = matrix(NA, nrow=4, ncol=4)
+for(ii in 1:16){
+  shap.calc = shapiro.test(D_tall$measure[D_tall$condition==ii])
+  shapiro.mat[i] = shap.calc$p.value
+}
+
+
+##==> summary of normality check <==##
+# Based on the analyses above, there is no evidence of normality for each of the 
+# univariate histograms. Violations was indicated by a p-value of less than .005.
+# Conventional parametric tests, therefore, are not appropriate, and so subsequent
+# confidence intervals will be estimated using boostrapping and p-values will be
+# obtained using permutation testing. Planned comparisons were also conducted using
+# Wilcoxon paired sign-ranked tests.
+#####################################
+
+
+
+
+##==> Equal variance check <==##
+
+# plot the boxplots
+boxplot(D_tall$measure~D_tall$condition)
+
+
+# formal test of equal variance
+install.packages("car")
+library(car)
+leveneTest(D_tall$measure, as.factor(D_tall$condition), center=median) # used 'median' because it's a better measure of central tendency given the non-normality
+
+
+##==> summary of equal variance check <==##
+# Based on the analysis above, there is evidence of unequal variance.
+# Violations were indicated by p-values that were less than .005.
+# Corroborating the 'normality" analyses above, then, subsequent analyses
+# will use bootstrapping and parametric tests.
+###########################################
+
+
+
+
+########################################################
+#############                              #############
+#############      Models                  #############
+#############                              #############
+########################################################
+
+# install 'lme4' package to use the lmer function
+install.packages("lme4")
+library(lme4)
+
+
+# run a lm and lmer model and compare the models using BIC
+
+# full models
+lm.fit.full = lm(measure~as.factor(condition), data=D_tall)
+lmer.fit.full = lmer(measure~as.factor(condition)+(1|ID), data=D_tall)
+
+summary(lm.fit.full)
+summary(lmer.fit.full)
+
+BIC(lm.fit.full)
+BIC(lmer.fit.full)
+
+# partial model
+lm.fit.part = lm(measure~factor(D_tall$condition, levels=c(2,6)), data=D_tall)
+lmer.fit.part = lmer(measure~factor(D_tall$condition, levels=c(2,6))+(1|ID), data=D_tall)
+
+summary(lm.fit.part)
+summary(lmer.fit.part)
+
+BIC(lm.fit.part)
+BIC(lmer.fit.part)
+
+
+
+##==> Comparisons <==##
+set.seed(105010)
+########
+## 1C ## 
+########
+
+#########################
+# a pre and a post for 1C
+##########################
+oc_apre_apost= lmer(measure~factor(D_tall$condition, levels=c(9,11))+(1|ID), data=D_tall)
+summary(oc_apre_apost)
+
+
+#==> bootstrap CI for a pre and post for 1c <==#
+ocA.lmer.fit.1 = function(data,b,formula){ 
+  d= data[b,]
+  x = factor(d$condition, levels=c(9,11))
+  dif.1 =  lmer(d[,5]~x+(1|ID), data=D_tall)
+  return(fixef(dif.1)) #return the fixed effects coefficients. Notice that you're returning the fixed effects
+}
+ocA.lmer1.Bootobj = boot(D_tall, ocA.lmer.fit.1, R=5000)
+ocA.lmer1.Bootobj
+ocApreBootconfint = 45.21667  + 1.96*c(-2.983779, 2.983779) # a pre CI
+ocApostBootconfint = 45.21667  + 1.96*c(-2.187528, 2.187528) # a post CI
+
+#==> Permutation test to establish p.value for a pre and post for 1c <==#
+b = rep(0,1000) 
+
+for(i in 1:1000){
+  x = factor(D_tall$condition, levels=c(9,11)) 
+  y = sample(D_tall$measure, replace=TRUE) 
+  lm_1 = lm(y ~ x, data=D_tall) 
+  b[i] = coef(lm_1)[2] 
+}
+
+beta_actual = coef(lm(measure~factor(D_tall$condition, levels=c(9,11)), data=D_tall))[2]
+sum(b > beta_actual) #number of actual cases that are greater than the actual beta
+sum(abs(b) > beta_actual)/1000 #p-value, two-tailed
+hist(b)
+abline(v = beta_actual, col = "blue", lwd = 2)
+
+
+
+#########################
+# b pre and b post for 1C
+#########################
+oc_bpre_bpost= lmer(measure~factor(D_tall$condition, levels=c(12,10))+(1|ID), data=D_tall)
+summary(oc_bpre_bpost)
+
+#==> bootstrap CI for B pre and post for 1c <==#
+ocB.lmer.fit.1 = function(data,b,formula){ 
+  d= data[b,]
+  x = factor(d$condition, levels=c(12,10))
+  dif.1 =  lmer(d[,5]~x+(1|ID), data=D_tall)
+  return(fixef(dif.1)) #return the fixed effects coefficients. Notice that you're returning the fixed effects
+}
+ocB.lmer1.Bootobj = boot(D_tall, ocB.lmer.fit.1, R=5000)
+ocB.lmer1.Bootobj
+ocBpreBootconfint = 49.56667  + 1.96*c(-1.947442, 1.947442) # b pre CI
+ocBpostBootconfint = 10.5  + 1.96*c(-3.445610, 3.445610) # b post CI
+
+
+
+#==> Permutation test to establish p.value for b pre and post for 1c <==#
+b = rep(0,1000) 
+
+for(i in 1:1000){
+  x = factor(D_tall$condition, levels=c(12,10)) 
+  y = sample(D_tall$measure, replace=TRUE) 
+  lm_1 = lm(y ~ x, data=D_tall) 
+  b[i] = coef(lm_1)[2] 
+}
+
+beta_actual = coef(lm(measure~factor(D_tall$condition, levels=c(12,10)), data=D_tall))[2]
+sum(b > beta_actual) #number of actual cases that are greater than the actual beta
+sum(abs(b) > beta_actual)/1000 #p-value, two-tailed
+hist(b)
+
+
+
+
+
+
+
+
+
+########
+## 2C ## 
+########
+# a pre and a post for 2C
+tc_apre_apost= lmer(measure~factor(D_tall$condition, levels=c(13,15))+(1|ID), data=D_tall)
+summary(tc_apre_apost)
+
+
+# b pre and b post for 2C
+tc_bpre_bpost= lmer(measure~factor(D_tall$condition, levels=c(14,16))+(1|ID), data=D_tall)
+summary(tc_bpre_bpost)
+
+## IS ## 
+# a pre and a post for IS
+is_apre_apost= lmer(measure~factor(D_tall$condition, levels=c(5,7))+(1|ID), data=D_tall)
+summary(is_apre_apost)
+
+
+# b pre and b post for IS
+is_bpre_bpost= lmer(measure~factor(D_tall$condition, levels=c(6,8))+(1|ID), data=D_tall)
+summary(is_bpre_bpost)
+
+
+## BB ## 
+# a pre and a post for IS
+bb_apre_apost= lmer(measure~factor(D_tall$condition, levels=c(1,3))+(1|ID), data=D_tall)
+summary(bb_apre_apost)
+
+
+# b pre and b post for IS
+bb_bpre_bpost= lmer(measure~factor(D_tall$condition, levels=c(2,4)+(1|ID), data=D_tall)
+summary(bb_bpre_bpost)
+
+
+## Comparison across BB and IS for object B
+bb_bpost_is_bpost = lmer(measure~factor(D_tall$condition, levels=c(4,8))+(1|ID))
+summary(bb_bpost_is_bpost)

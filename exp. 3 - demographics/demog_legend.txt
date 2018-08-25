@@ -1,0 +1,21 @@
+College
+0 = MCS
+1 = Dietrich
+2 = CIT
+3 = Tepper
+4 = CFA
+5 = SCS
+
+Age 
+0 = 17-19
+1 = 20-22
+
+Type of school
+0 = public
+1 = private
+
+Year in school
+0 = freshman
+1 = sophomore
+2 = junior
+3 = senior

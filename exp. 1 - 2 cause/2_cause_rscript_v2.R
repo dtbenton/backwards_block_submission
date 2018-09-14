@@ -7,11 +7,22 @@
 ########################################################
 ########################################################
 ########################################################
+library(lme4)
+library(nlme)
+library(boot)
+library(car) 
+library(reshape2)
+library(ggplot2)
+library(ez)
+library(plyr)
+library(ggsignif)
+library(ez)
+options(scipen=9999)
 
 ## INITIAL SET UP ##
 # import "2_cause_CSV.csv"
 D = read.csv(file.choose(), header = TRUE)
-
+D$X = NULL
 # convert data from "wide" to "tall" format
 D_tall = reshape(D, varying = 3:18, v.names = "measure", timevar = "condition", idvar = "ID", new.row.names = 1:960, direction = "long")
 
@@ -733,3 +744,92 @@ condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge")
   theme(strip.text = element_text(colour = 'white')) + # change facet labels color and text color
   labs(x = "Test trials") + # change the main x-axis label
   facet_wrap(~condition, scales = "free_x")
+
+
+
+####################################
+# NEW, IMPROVED B COMPARISON FIGURE#
+####################################
+
+###########################
+## Bprepost BB dataframe ##
+###########################
+BB = D[,-c(2:3,5,7:18)]
+BB_tall = reshape(BB, varying = 2:3, v.names = "measure", 
+                  timevar = "condition", idvar = "ID", 
+                  new.row.names = 1:120, direction = "long")
+BB_tall = BB_tall[order(BB_tall$ID),]
+
+
+BB_tall$phase = rep(c(1:2), times = 60)
+BB_tall$phase = revalue(x = as.factor(BB_tall$phase), 
+                        c("1" = "'B' Pre", "2"="'B' Post"))
+
+BB_tall$condition = NULL
+
+# reorder columns
+BB_tall = BB_tall[,c(1,3,2)]
+
+
+condition_barplot = ggplot(BB_tall, aes(phase, measure, fill = phase)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
+condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
+  stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
+  ylab("ratings (scale: 0-100)") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
+  coord_cartesian(ylim=c(0, 60)) +
+  theme_classic() +
+  scale_fill_manual(values = c("gray81", "white")) +
+  theme(strip.background =element_rect(fill='black')) +
+  theme(strip.text = element_text(colour = 'white', size = 12, face = "bold")) +
+  theme(axis.title=element_text(size="12"),axis.text=element_text(size=12)) + 
+  theme(legend.position="none") +
+  labs(x = "Test trials")
+
+
+
+
+
+
+
+
+
+##################################
+## BpostBB vs BpostIS dataframe ##
+##################################
+
+BB_IS = D[,-c(2:5,7:9,11:18)]
+BB_IS_tall = reshape(BB_IS, varying = 2:3, v.names = "measure", 
+                  timevar = "condition", idvar = "ID", 
+                  new.row.names = 1:120, direction = "long")
+BB_IS_tall = BB_IS_tall[order(BB_IS_tall$ID),]
+
+BB_IS_tall$type = rep(c(1:2), times = 60)
+BB_IS_tall$type = revalue(x = as.factor(BB_IS_tall$type), 
+                        c("1" = "B BB Post", "2"="B IS Post"))
+
+
+BB_IS_tall$condition = NULL
+BB_IS_tall$phase = NULL
+
+condition_barplot = ggplot(BB_IS_tall, aes(type, measure, fill = type)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
+condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
+  stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
+  ylab("ratings (scale: 0-100)") +
+  geom_signif(annotations = "p < .001",
+              y_position = 97, xmin=1, 
+              xmax=2, 
+              tip_length = 0.00375) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
+  coord_cartesian(ylim=c(0, 100)) +
+  theme_classic() +
+  scale_fill_manual(values = c("gray81", "white")) +
+  theme(strip.background =element_rect(fill='black')) +
+  theme(strip.text = element_text(colour = 'white', size = 12, face = "bold")) +
+  theme(axis.title=element_text(size="12"),axis.text=element_text(size=12)) + 
+  theme(legend.position="none") +
+  labs(x = "Test trials")
+

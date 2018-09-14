@@ -7,6 +7,18 @@
 ########################################################
 ########################################################
 ########################################################
+library(lme4)
+library(nlme)
+library(boot)
+library(car) 
+library(reshape2)
+library(ggplot2)
+library(ez)
+library(plyr)
+library(ggsignif)
+library(ez)
+options(scipen=9999)
+
 ## INITIAL SET UP ##
 # import "4_cause_CSV.csv"
 D = read.csv(file.choose(), header = TRUE)
@@ -1154,7 +1166,7 @@ sum(abs(b) < beta_actual)/5000 #p-value, two-tailed #0.0001
 
 
 # B- mid vs post
-# create a function that computes the difference between B- pre vs post
+# create a function that computes the difference between B- mid vs post
 subBminusprepost = subset(D_tall, ! condition %in% c(1:7,9:11,13:48))
 subBminusprepost$condition = as.factor(subBminusprepost$condition)
 subBminusprepost$condition = factor(subBminusprepost$condition)
@@ -1173,7 +1185,7 @@ beta_actual = fixed.effects(lm.fit)[2]
 
 sum(b < beta_actual)/5000
 sum(b > beta_actual)/5000
-sum(abs(b) < beta_actual)/5000 #p-value, two-tailed #0.0001
+sum(abs(b) > beta_actual)/5000 #p-value, two-tailed #0.0001
 
 
 
@@ -2125,8 +2137,9 @@ condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge")
   facet_wrap(~condition, scales = "free_x")# change the main x-axis label
 
 
-
-# NEW GRAPHIC
+####################################
+# NEW, IMPROVED B COMPARISON FIGURE#
+####################################
 
 BB = as.data.frame(D[,-c(2:3,6:7,10:11,14:49)])
 BB_tall = reshape(BB, varying = 2:7, v.names = "measure", 
@@ -2155,9 +2168,17 @@ condition_barplot = ggplot(BB_tall, aes(condition, measure, fill = phase)) # cre
 condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
   stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
   ylab("ratings (scale: 0-100)") + # change the label of the y-axis
+  geom_signif(annotations = c("p < .001", "p < .001", "p < .001", "p < .001"),
+              y_position = c(70, 65, 62.5, 75), xmin=c(.6, .8, .985, .6), 
+              xmax=c(.875, .975, 1.2,1.3), 
+              tip_length = 0.00375) +
+  geom_signif(annotations = c("p < .01","p < .01"),
+              y_position = c(58,63), xmin=c(1.975,2.275), 
+              xmax=c(1.7,2), 
+              tip_length = 0.00375) +
   theme_bw() +
   scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
-  coord_cartesian(ylim=c(0, 75)) +
+  coord_cartesian(ylim=c(0, 80)) +
   theme_classic() +
   scale_fill_manual(values = c("white", "gray81", "black")) +
   theme(strip.background =element_rect(fill='black')) +
@@ -2167,16 +2188,3 @@ condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge",
   theme(legend.text = element_text(size = 12)) + 
   theme(legend.title=element_blank()) +
   labs(x = "Test trials")
-
-
-# inlcude this after y-lab
-geom_signif(annotations = c("p < .0001","p < .0275","p < .0001","p < .005", 
-                            "p < .001"),
-            y_position = c(60,57,54,51,48), xmin=c(.6,.875,.6,.875,.6), 
-            xmax=c(1.35,1.35,1.075,1.075,.875), 
-            tip_length = 0.00375) +
-  geom_signif(annotations = c("p < .0001","p < .05","p < .0001","p < .01", 
-                              "p < .005"),
-              y_position = c(60,57,54,51,48), xmin=c(2.275,2.275,2.075,2.075,1.875), 
-              xmax=c(1.6,1.875,1.6,1.875,1.6), 
-              tip_length = 0.00375)

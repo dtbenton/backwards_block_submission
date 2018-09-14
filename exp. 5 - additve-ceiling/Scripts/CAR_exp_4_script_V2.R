@@ -986,6 +986,32 @@ beta_actual = fixed.effects(lm.fit)[2]
 sum(abs(b) < beta_actual)/5000 #p-value, two-tailed #0.0001
 sum(b<beta_actual)/5000
 
+#################################
+# B+ BB pre vs mid: BAYES FACTOR#
+#################################
+# define the null and alternative models #
+lm.null = lme(measure~1, random=~1|ID, data=subBpluspremid)
+lm.alt = lme(measure~as.factor(condition), random=~1|ID,
+             data=subBpluspremid)
+
+#obtain BICs for the null and alternative models
+null.bic = BIC(lm.null)
+alt.bic = BIC(lm.alt)
+
+# compute the BF01  - this is the BF whose value is interpreted as the evidence in favor of the null (e.g., if the BF01 = 2.6, this means that there is 2.6 times as much evidence for the null than for the alternative or the evidence is 2.6:1 in favor of the null)
+
+BF01 = exp((alt.bic - null.bic)/2) # this yields a BF that is interpreted as the evidence in favor of the null; it's critical that the alt.bic comes first otherwise your interpretation of the resulting BF value will be incorrect
+BF10 = 1/BF01
+
+
+
+
+
+
+
+
+
+
 # B+ pre vs post
 # create a function that computes the difference between A- pre vs post
 subBplusprepost = subset(D_tall, ! condition %in% c(1:2,4:10,12:48))
@@ -2097,3 +2123,60 @@ condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge")
   theme(strip.text = element_text(colour = 'white')) + # change facet labels color and text color
   labs(x = "Test trials") +
   facet_wrap(~condition, scales = "free_x")# change the main x-axis label
+
+
+
+# NEW GRAPHIC
+
+BB = as.data.frame(D[,-c(2:3,6:7,10:11,14:49)])
+BB_tall = reshape(BB, varying = 2:7, v.names = "measure", 
+                  timevar = "condition", idvar = "ID", 
+                  new.row.names = 1:360, direction = "long")
+
+BB_tall = BB_tall[order(BB_tall$ID),]
+
+BB_tall$phase = rep(c(1:3), each = 2, times = 60)
+BB_tall$phase = revalue(x = as.factor(BB_tall$phase), 
+                             c("1" = "Pre", "2"="Mid", "3" = "Post"))
+
+BB_tall$condition = NULL
+
+BB_tall$condition = rep(c(1:2), times = 180)
+BB_tall$condition = revalue(x = as.factor(BB_tall$condition), 
+                           c("1" = "B+", "2"="B-"))
+
+# reorder columns of BB_tall dataframe
+BB_tall = BB_tall[,c(1,4,2,3)]
+BB_tall$row.names = NULL
+
+
+
+condition_barplot = ggplot(BB_tall, aes(condition, measure, fill = phase)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
+condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
+  stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
+  ylab("ratings (scale: 0-100)") + # change the label of the y-axis
+  theme_bw() +
+  scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
+  coord_cartesian(ylim=c(0, 75)) +
+  theme_classic() +
+  scale_fill_manual(values = c("white", "gray81", "black")) +
+  theme(strip.background =element_rect(fill='black')) +
+  theme(strip.text = element_text(colour = 'white', size = 12, face = "bold")) +
+  theme(axis.title=element_text(size="12"),axis.text=element_text(size=12)) + 
+  theme(legend.box.background = element_rect(), legend.box.margin = margin(6, 6, 6, 6)) +
+  theme(legend.text = element_text(size = 12)) + 
+  theme(legend.title=element_blank()) +
+  labs(x = "Test trials")
+
+
+# inlcude this after y-lab
+geom_signif(annotations = c("p < .0001","p < .0275","p < .0001","p < .005", 
+                            "p < .001"),
+            y_position = c(60,57,54,51,48), xmin=c(.6,.875,.6,.875,.6), 
+            xmax=c(1.35,1.35,1.075,1.075,.875), 
+            tip_length = 0.00375) +
+  geom_signif(annotations = c("p < .0001","p < .05","p < .0001","p < .01", 
+                              "p < .005"),
+              y_position = c(60,57,54,51,48), xmin=c(2.275,2.275,2.075,2.075,1.875), 
+              xmax=c(1.6,1.875,1.6,1.875,1.6), 
+              tip_length = 0.00375)

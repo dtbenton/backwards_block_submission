@@ -864,7 +864,7 @@ D_tall$condition = NULL
 
 
 # REORDER COLUMNS
-D_tall = D_tall[,c(1,2,3,6,4,5)]
+D_tall = D_tall[,c(1,2,6,5,4,3)]
 
 
 # OMNIBUS ANALYSIS FIGURE
@@ -888,3 +888,15 @@ condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge",
   annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) + # ditto
   theme(legend.title=element_blank()) +
   labs(x = "Test trials") # change the main x-axis label
+
+
+
+
+##########################
+# SUPPLEMENTARY ANALYSES #
+##########################
+
+# One-tailed t-test to determine to what extent subject's pre-ratings (averaged across object and condition)
+# did (or did not) differ reliably from 50%.
+pre_test_t_test = t.test(D_tall$measure[D_tall$phase=="Pre"], mu = 50, alternative = "greater")
+

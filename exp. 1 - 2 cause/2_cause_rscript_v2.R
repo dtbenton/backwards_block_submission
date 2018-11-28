@@ -833,3 +833,58 @@ condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge",
   theme(legend.position="none") +
   labs(x = "Test trials")
 
+
+#########################
+# REMADE OMNIBUS FIGURE #
+#########################
+D_tall = D_tall[order(D_tall$ID),]
+# ADD A CONDITION NAME COLUMN
+D_tall$condition_names = as.factor(rep(1:4, each = 4, times = 60))
+D_tall$condition_names = revalue(x = as.factor(D_tall$condition_names), 
+                                 c("1" = "BB", "2"="IS", "3" = "1C", 
+                                   "4" = "2C"))
+
+# ADD A 'PHASE' COLUMN
+D_tall$phase = as.factor(rep(1:2, each = 2, times = 240))
+D_tall$phase = revalue(x = as.factor(D_tall$phase), 
+                       c("1" = "Pre", "2"="Post"))
+
+
+# ADD A 'A-B' COLUMN
+D_tall$objects = as.factor(rep(1:2, times = 480))
+D_tall$objects = revalue(x = as.factor(D_tall$objects), 
+                       c("1" = "A", "2"="B"))
+
+# RENAME SEX COLUMN
+D_tall$sex = revalue(x = as.factor(D_tall$sex), 
+                     c("1" = "M", "2"="F"))
+
+# REMOVE 'CONDITION' COLUMN
+D_tall$condition = NULL
+
+
+# REORDER COLUMNS
+D_tall = D_tall[,c(1,2,3,6,4,5)]
+
+
+# OMNIBUS ANALYSIS FIGURE
+condition_barplot = ggplot(D_tall, aes(objects, measure, fill = phase)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
+condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
+  stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
+  ylab("ratings (scale: 0-100)") + # change the label of the y-axis
+  facet_wrap(~condition_names, scales = 'free') + # scales='free' ensures that each blot has x labels
+  theme_bw() + # remove the gray background
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + # remove the major and minor grids
+  scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
+  coord_cartesian(ylim=c(0, 100)) +
+  theme_classic() +
+  scale_fill_manual(values = c("gray68", "black")) +
+  theme(strip.text = element_text(colour = 'black', size = 12)) + # this changes the size and potentially weight of the facet labels
+  theme(axis.title=element_text(size="12"),axis.text=element_text(size=12)) + 
+  theme(legend.box.background = element_rect(), legend.box.margin = margin(6, 6, 6, 6)) +
+  theme(legend.text = element_text(size = 12)) + 
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf) + # this adds a vertical & horizontal line to each plot
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) + # ditto
+  theme(legend.title=element_blank()) +
+  labs(x = "Test trials") # change the main x-axis label

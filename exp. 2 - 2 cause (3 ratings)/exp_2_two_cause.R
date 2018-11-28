@@ -53,10 +53,15 @@ D_tall$phase = revalue(x = as.factor(D_tall$phase),
 D_tall$sex = revalue(x = as.factor(D_tall$sex), 
                        c("1" = "M", "2"="F"))
 
+# OBJECT COLUMN
+D_tall$objects = as.factor(rep(1:2, times = 288))
+D_tall$objects = revalue(x = as.factor(D_tall$objects), 
+                         c("1" = "A", "2"="B"))
 # REORDER COLUMNS'
-D_tall = D_tall[,c(1,2,3,6,7,5,4)]
 D_tall$condition = NULL
 D_tall$row.names = NULL
+D_tall = D_tall[,c(1,2,3,5,7,6,4)]
+
 
 
 
@@ -92,3 +97,66 @@ leveneTest(D_tall$measure, as.factor(D_tall$norm_col), center=median) # used 'me
 # confidence intervals will be estimated using boostrapping and p-values will be
 # obtained using permutation testing. Planned comparisons were also conducted using
 # Wilcoxon paired sign-ranked tests.
+
+########################################################
+########################################################
+########################################################
+#############                              #############
+#############            Models            #############
+#############                              #############
+########################################################
+########################################################
+########################################################
+
+########################################################
+####          CONTROL CONDITITION ANALYSES          ####
+########################################################
+# create a data frame in which the 1C condition is subsetted
+1C_subset = subset(D_tall, ! condition_names %in% c("BB","IS","2C"))
+
+# 1C condition
+lme.fit.1C = lme(measure~(condition_names+phase+objects)^3, 
+                 random=~1|ID, 
+                 data=D_tall)
+
+lme.fit.1C = lme(measure[condition_names=="1C"]~condition_names=="1C", 
+                 random=~1|ID, 
+                 data=D_tall)
+
+anova.lme(lme.fit.1C)
+
+
+
+practice = lme(D_tall$measure[D_tall$condition_names=="1C"]~D_tall$condition_names[D_tall$condition_names=="1C"]+
+                 D_tall$objects[D_tall$condition_names=="1C"],
+               random=~1|ID,
+               data=D_tall)
+################################################################
+################################################################
+################################################################
+#############                                      #############
+#############            OMNIBUS FIGURE            #############
+#############                                      #############
+################################################################
+################################################################
+################################################################
+condition_barplot = ggplot(D_tall, aes(objects, measure, fill = phase)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
+condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
+  stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
+  ylab("ratings (scale: 0-100)") + # change the label of the y-axis
+  facet_wrap(~condition_names, scales = 'free') + # scales='free' ensures that each blot has x labels
+  theme_bw() + # remove the gray background
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + # remove the major and minor grids
+  scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
+  coord_cartesian(ylim=c(0, 110)) +
+  theme_classic() +
+  scale_fill_manual(values = c("white","gray68", "black")) +
+  theme(strip.text = element_text(colour = 'black', size = 12)) + # this changes the size and potentially weight of the facet labels
+  theme(axis.title=element_text(size="12"),axis.text=element_text(size=12)) + 
+  theme(legend.box.background = element_rect(), legend.box.margin = margin(6, 6, 6, 6)) +
+  theme(legend.text = element_text(size = 12)) + 
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf) + # this adds a vertical & horizontal line to each plot
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) + # ditto
+  theme(legend.title=element_blank()) +
+  labs(x = "Test trials")

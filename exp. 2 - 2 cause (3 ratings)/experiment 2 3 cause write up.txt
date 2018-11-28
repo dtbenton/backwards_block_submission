@@ -1,6 +1,9 @@
+Method. Twenty-four college students were recruited for Experiment 2 and were given course credit for their participation. As was mentioned in Experiment 1, an a priori power analysis indicated that 16 participants would be needed to have an 80% chance of detecting a reliable difference if such a difference existed. 
 
+Participants.
+Stimuli, design, and procedure. All aspects of Experiment 2 were identical to Experiment 1 with one exception. In addition to asking adults to rate objects A and B on the same scale during a pre-test and post-test phase, participants were asked to provide mid-ratings of both objects. Thus, in the BB condition, participants rated objects A and B before the AB+ event, after the AB+ event, and then after the A+ event. In the IS condition, participants rated both objects before the AB+ event, after the AB+ event, and then after the A- event. In the 1C, participants rated the objects before the A+;B- events, after the A+;B- events, and then after the AB+ event. Finally, in the 2C condition, participants rated the objects before the A+++ event, after the A+++ event, and then after the A+++;B-B++ test events.
 
-
+Results. Figure 2 shows the mean pre and post causal ratings of objects A and B across the four conditions. The analyses proceeded in the same order as that in Experiment 1.
 
 
 

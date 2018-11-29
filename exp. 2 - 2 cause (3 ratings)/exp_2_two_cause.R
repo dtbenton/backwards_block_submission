@@ -111,26 +111,34 @@ leveneTest(D_tall$measure, as.factor(D_tall$norm_col), center=median) # used 'me
 ########################################################
 ####          CONTROL CONDITITION ANALYSES          ####
 ########################################################
+
+#####################################################################################
+# CONDITION (1C vs 2C) x OBJECT (A vs B) x PHASE (Pre vs Mid vs Post) OMNIBUS ANOVA #
+#####################################################################################
 # create a data frame in which the 1C condition is subsetted
-1C_subset = subset(D_tall, ! condition_names %in% c("BB","IS","2C"))
+one__and_two_cause_subset = subset(D_tall, ! condition_names %in% c("BB","IS")) # creating a smaller
+                                                                                # data set by removing the 
+                                                                                # BB and IS conditions.
 
 # 1C condition
-lme.fit.1C = lme(measure~(condition_names+phase+objects)^3, 
+lme_one__and_two_cause_subset = lme(measure~(condition_names+phase+objects)^3, 
                  random=~1|ID, 
-                 data=D_tall)
+                 data=one__and_two_cause_subset)
 
-lme.fit.1C = lme(measure[condition_names=="1C"]~condition_names=="1C", 
-                 random=~1|ID, 
-                 data=D_tall)
-
-anova.lme(lme.fit.1C)
+# omnibus ANOVA
+anova.lme(lme_one__and_two_cause_subset)
 
 
+#######################
+# ONE-CAUSE CONDITION #
+#######################
 
-practice = lme(D_tall$measure[D_tall$condition_names=="1C"]~D_tall$condition_names[D_tall$condition_names=="1C"]+
-                 D_tall$objects[D_tall$condition_names=="1C"],
-               random=~1|ID,
-               data=D_tall)
+#######################
+# TWO-CAUSE CONDITION #
+#######################
+
+
+
 ################################################################
 ################################################################
 ################################################################

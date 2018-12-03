@@ -567,6 +567,13 @@ global_boot_2("BB","BB","Mid","Post","B","B")
 #############################################################
 # COMPARE POST-RATING OF B BETWEEN THE BB AND IS CONDITIONS #
 #############################################################
+# Bpost BB:
+# Mean: 49.16667; 95%CI[37.61650,60.71683]
+global_boot("BB","Post","B")
+
+# Bpost IS:
+# Mean: 97.08333; 95%CI[94.14307,100.02360]
+global_boot("IS","Post","B")
 
 perm_func("IS","IS","Mid","Post","B","B")
 # -34.29167   1.00000   0.00000   1.00000   0.00000

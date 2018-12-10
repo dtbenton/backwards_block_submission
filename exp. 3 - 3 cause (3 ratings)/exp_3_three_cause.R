@@ -33,8 +33,8 @@ D_tall = reshape(D, varying = 4:39, v.names = "measure", timevar = "condition",
 
 D_tall$measure = as.numeric(D_tall$measure)
 D_tall$sex = as.factor(D_tall$sex)
-D_tall$condition_order = as.factor(D_tall$condition_order)
 D_tall$condition = as.factor(D_tall$condition)
+D_tall$condition_order = as.factor(D_tall$condition_order)
 
 D_tall = D_tall[order(D_tall$ID),]
 
@@ -43,6 +43,11 @@ D_tall$condition_names = as.factor(rep(1:4, each = 9, times = 24))
 D_tall$condition_names = revalue(x = as.factor(D_tall$condition_names), 
                                  c("1" = "BB", "2"="IS", "3" = "1C", 
                                    "4" = "2C"))
+
+
+# ADD A CONDITION ORDER COLUMN
+D_tall$condition_order = revalue(x = as.factor(D_tall$condition_order), 
+                     c("1" = "1234", "2"="2413", "3"="3142", "4"="4321"))
 
 # ADD A 'PHASE' COLUMN
 D_tall$phase = as.factor(rep(1:3, each = 3, times = 96))
@@ -60,7 +65,7 @@ D_tall$objects = revalue(x = as.factor(D_tall$objects),
 # REORDER COLUMNS'
 D_tall$condition = NULL
 D_tall$row.names = NULL
-D_tall = D_tall[,c(1,2,4,5,6,3)]
+D_tall = D_tall[,c(1,2,3,5,6,7,4)]
 
 ########################################################
 #############                              #############
@@ -68,21 +73,25 @@ D_tall = D_tall[,c(1,2,4,5,6,3)]
 #############                              #############
 ########################################################
 # NORMALITY CHECK
-D_tall$norm_col = rep(1:24, times=24)
-hist(D_tall$measure[D_tall$norm_col==ii], breaks=5)
-shapiro.ps = rep(0,24)
-for(i in 1:16) {
-  shap.calc = shapiro.test(D_tall$measure[D_tall$norm_col==i])
+# plot norm plots for each condition
+par(mfrow=c(2,2)) 
+for (ii in c("BB","IS","1C","2C"))hist(D_tall$measure[D_tall$condition_names==ii], breaks=5)
+par(mfrow=c(1,1))
+
+# get p-values for multi-variate norm test
+shapiro.ps = rep(0,4)
+for(i in c("BB","IS","1C","2C")) {
+  shap.calc = shapiro.test(D_tall$measure[D_tall$condition_names==i])
   shapiro.ps[i] = shap.calc$p.value
 }
 
 
 # EQUAL VARIANCE CHECK
 #box plots
-boxplot(D_tall$measure~D_tall$norm_col) 
+boxplot(D_tall$measure~D_tall$condition_names) 
 
 # formal test of equal variance
-leveneTest(D_tall$measure, as.factor(D_tall$norm_col), center=median) # used 'median' because it's a better measure of central tendency given the non-normality
+leveneTest(D_tall$measure, as.factor(D_tall$condition_names), center=median) # used 'median' because it's a better measure of central tendency given the non-normality
 
 
 
@@ -93,7 +102,7 @@ leveneTest(D_tall$measure, as.factor(D_tall$norm_col), center=median) # used 'me
 # Conventional parametric tests, therefore, are not appropriate, and so subsequent
 # confidence intervals will be estimated using boostrapping and p-values will be
 # obtained using permutation testing. Planned comparisons were also conducted using
-# Wilcoxon paired sign-ranked tests.
+# permutation tests.
 
 ########################################################
 ########################################################
@@ -172,10 +181,9 @@ global_boot_2 = function(s1,s2,p1,p2,o1,o2){
 ############################
 ### PRELIMINARY ANALYSES ###
 ############################
-
 # DETERMINING WHETHER 'SEX' OR 'TEST TRIAL ORDER' INTERACTED WITH ANY OF THE 
 # REMAINING FACTORS.
-prelim_analysis = lme(measure~(sex+condition_order+condition_names+objects+phase)^5,
+prelim_analysis = lme(measure~(sex+condition_names+condition_order+objects+phase)^5,
                       random=~1|ID,
                       data=D_tall)
 anova.lme(prelim_analysis)
@@ -185,6 +193,9 @@ anova.lme(prelim_analysis)
 ####          CONTROL CONDITITION ANALYSES          ####
 ########################################################
 
+# NOTE THAT FORMAL ANALYSIS WERE NOT INCLUDED IN THE MANUSCRIPT FOR EXPERIMENT 3.
+# HOWEVER, THE CODE WILL BE KEPT HERE IN CASE I'M REQUIRED TO REPORT THEM IN THE 
+# REVIEW OF THE MS.
 #####################################################################################
 # CONDITION (1C vs 2C) x OBJECT (A vs B) x PHASE (Pre vs Mid vs Post) OMNIBUS ANOVA #
 #####################################################################################
@@ -208,49 +219,49 @@ anova.lme(lme_one__and_two_cause_subset)
 
 #### A RATINGS AND MEASURES ####
 # Apre:
-# Mean: 51.46; 95%CI[45.76,57.16]
+
 global_boot("1C","Pre","A")
 
 # Amid:
-# Mean: 98.13; 95%CI[95.84,100.41]
+
 global_boot("1C","Mid","A")
 
 # Apost:
-# Mean: 99.38; 95%CI[98.49,100.26]
+
 global_boot("1C","Post","A")
 
 
 # Apre vs Amid
 perm_func("1C","1C","Pre","Mid","A","A")
-# -46.66667   1.00000   0.00000   1.00000   0.00000
+
 global_boot_2("1C","1C","Pre","Mid","A","A") 
-# -46.66667 -52.77777 -40.55556
+
 
 # Apre vs Apost
 perm_func("1C","1C","Pre","Post","A","A")
-# -47.91667   1.00000   0.00000   1.00000   0.00000
+
 global_boot_2("1C","1C","Pre","Post","A","A")
-# -47.91667 -53.68569 -42.14764
+
 
 # Amid vs Apost
 perm_func("1C","1C","Mid","Post","A","A")
-# -1.25000  1.00000  0.00000  0.54775  0.44600
+
 global_boot_2("1C","1C","Mid","Post","A","A")
-# -1.250000 -3.708972  1.208972
+
 
 
 
 #### B RATINGS AND MEASURES ####
 # Bpre:
-# Mean: 50.20833; 95%CI[44.48784,55.92883]
+
 global_boot("1C","Pre","B")
 
 # Bmid:
-# Mean: 2.083333; 95%CI[-1.257449,5.424116]
+
 global_boot("1C","Mid","B")
 
 # Bpost:
-# Mean: 0.8333333; 95%CI[-0.2966464,1.9633130]
+
 global_boot("1C","Post","B")
 
 
@@ -258,58 +269,89 @@ global_boot("1C","Post","B")
 
 # Bpre vs Bmid
 perm_func("1C","1C","Pre","Mid","B","B")
-# 48.125  0.000  1.000  0.000  1.000
+
 global_boot_2("1C","1C","Pre","Mid","B","B") 
-# 48.12500 41.56021 54.68979
+
 
 # Bpre vs Bpost
 perm_func("1C","1C","Pre","Post","B","B")
-# 49.375  0.000  1.000  0.000  1.000
+
 global_boot_2("1C","1C","Pre","Post","B","B")
-# 49.37500 43.53044 55.21956
+
 
 # Bmid vs Bpost
 perm_func("1C","1C","Mid","Post","B","B")
-# 1.250 0.883 0.104 0.455 0.537
+
 global_boot_2("1C","1C","Mid","Post","B","B")
-# 1.25000 -2.30575  4.80575
 
 
+#### C RATINGS AND MEASURES ####
+# Cpre:
+
+global_boot("1C","Pre","C")
+
+# Cmid:
+
+global_boot("1C","Mid","C")
+
+# Cpost:
+
+global_boot("1C","Post","C")
+
+
+
+
+# Cpre vs Cmid
+perm_func("1C","1C","Pre","Mid","C","C")
+
+global_boot_2("1C","1C","Pre","Mid","C","C") 
+
+
+# Cpre vs Cpost
+perm_func("1C","1C","Pre","Post","C","C")
+
+global_boot_2("1C","1C","Pre","Post","C","C")
+
+
+# Cmid vs Cpost
+perm_func("1C","1C","Mid","Post","C","C")
+
+global_boot_2("1C","1C","Mid","Post","C","C")
 
 #######################
 # TWO-CAUSE CONDITION #
 #######################
 #### A RATINGS AND MEASURES ####
 # Apre:
-# Mean: 46.45833; 95%CI[40.94497,51.97169]
+
 global_boot("2C","Pre","A")
 
 # Amid:
-# Mean: 96.46; 95%CI[93.03,99.88]
+
 global_boot("2C","Mid","A")
 
 # Apost:
-# Mean: 98.33333; 95%CI[96.41997,100.24670]
+
 global_boot("2C","Post","A")
 
 
 # Apre vs Amid
 perm_func("2C","2C","Pre","Mid","A","A")
-# -50   1   0   1   0
+
 global_boot_2("2C","2C","Pre","Mid","A","A") 
-# -50.00000 -56.49915 -43.50085
+
 
 # Apre vs Apost
 perm_func("2C","2C","Pre","Post","A","A")
-# -51.875   1.000   0.000   1.000   0.000
+
 global_boot_2("2C","2C","Pre","Post","A","A")
-# -51.87500 -57.71247 -46.03753
+
 
 # Amid vs Apost
 perm_func("2C","2C","Mid","Post","A","A")
-# -1.87500  1.00000  0.00000  0.57700  0.41525
+
 global_boot_2("2C","2C","Mid","Post","A","A")
-# -1.875000 -5.809238  2.059238
+
 
 
 
@@ -318,15 +360,15 @@ global_boot_2("2C","2C","Mid","Post","A","A")
 
 #### B RATINGS AND MEASURES ####
 # Bpre:
-# Mean: 48.33333; 95%CI[43.11416,53.55251]
+
 global_boot("2C","Pre","B")
 
 # Bmid:
-# Mean: 44.16667; 95%CI[38.73088,49.60245]
+
 global_boot("2C","Mid","B")
 
 # Bpost:
-# Mean: 83.58333; 95%CI[70.77127,96.39539]
+
 global_boot("2C","Post","B")
 
 
@@ -334,26 +376,58 @@ global_boot("2C","Post","B")
 
 # Bpre vs Bmid
 perm_func("2C","2C","Pre","Mid","B","B")
-# 4.166667 0.670500 0.320500 0.331750 0.665000
+
 global_boot_2("2C","2C","Pre","Mid","B","B") 
-# 4.166667 -3.337112 11.670445
+
 
 # Bpre vs Bpost
 perm_func("2C","2C","Pre","Post","B","B")
-# -35.25   1.00   0.00   1.00   0.00
+
 global_boot_2("2C","2C","Pre","Post","B","B")
-# -35.25000 -49.04484 -21.45516
+
 
 
 # Bmid vs Bpost
 perm_func("2C","2C","Mid","Post","B","B")
-# -39.41667   1.00000   0.00000   0.99975   0.00025
+
 global_boot_2("2C","2C","Mid","Post","B","B")
-# -39.41667 -53.30272 -25.53061
 
 
 
 
+#### C RATINGS AND MEASURES ####
+# Cpre:
+
+global_boot("2C","Pre","C")
+
+# Cmid:
+
+global_boot("2C","Mid","C")
+
+# Cpost:
+
+global_boot("2C","Post","C")
+
+
+
+
+# Cpre vs Cmid
+perm_func("2C","2C","Pre","Mid","C","C")
+
+global_boot_2("2C","2C","Pre","Mid","C","C") 
+
+
+# Cpre vs Cpost
+perm_func("2C","2C","Pre","Post","C","C")
+
+global_boot_2("2C","2C","Pre","Post","C","C")
+
+
+
+# Cmid vs Cpost
+perm_func("2C","2C","Mid","Post","C","C")
+
+global_boot_2("2C","2C","Mid","Post","C","C")
 
 
 #####################################################
@@ -381,35 +455,35 @@ anova.lme(IS_subset_lme)
 #######################
 #### A RATINGS AND MEASURES ####
 # Apre:
-# Mean: 47.58333; 95%CI[42.09714,53.06952]
+# Mean: 54.58; 95%CI[48.62,60.54]
 global_boot("IS","Pre","A")
 
 # Amid:
-# Mean: 56.12500; 95%CI[49.41984,62.83016]
+# Mean: 65.83; 95%CI[57.94,73.73]
 global_boot("IS","Mid","A")
 
 # Apost:
-# Mean: 1.8750000; 95%CI[-0.3801578,4.1301578]
+# Mean: 10.21; 95%CI[2.23,18.19]
 global_boot("IS","Post","A")
 
 
 # Apre vs Amid
 perm_func("IS","IS","Pre","Mid","A","A")
-# -8.541667  1.000000  0.000000  0.815000  0.179750
+# -11.25000   1.00000   0.00000   0.89700   0.09925
 global_boot_2("IS","IS","Pre","Mid","A","A") 
-# -8.541667 -17.264271   0.180938
+# -11.250000 -21.112594  -1.387406
 
 # Apre vs Apost
 perm_func("IS","IS","Pre","Post","A","A")
-# 45.70833  0.00000  1.00000  0.00000  1.00000
+# 44.375  0.000  1.000  0.000  1.000
 global_boot_2("IS","IS","Pre","Post","A","A")
-# 45.70833 39.75218 51.66449
+# 44.37500 34.41221 54.33779
 
 # Amid vs Apost
 perm_func("IS","IS","Mid","Post","A","A")
-# 54.25  0.00  1.00  0.00  1.00
+# 55.625  0.000  1.000  0.000  1.000
 global_boot_2("IS","IS","Mid","Post","A","A")
-# 54.25000 47.10903 61.39097
+# 55.6250 44.4737 66.7763
 
 
 
@@ -418,43 +492,86 @@ global_boot_2("IS","IS","Mid","Post","A","A")
 
 #### B RATINGS AND MEASURES ####
 # Bpre:
-# Mean: 51.33333; 95%CI[44.04646,58.62021]
+# Mean: 52.08333; 95%CI[44.25578,59.91089]
 global_boot("IS","Pre","B")
+# 52.08333 44.25578 59.91089
 
 # Bmid:
-# Mean: 62.79167; 95%CI[55.48057,70.10277]
+# Mean: 67.91667; 95%CI[59.40407,76.42926]
 global_boot("IS","Mid","B")
+# 67.91667 59.40407 76.42926
 
 # Bpost:
-# Mean: 97.08333; 95%CI[94.14307,100.02360]
+# Mean: 98.75000; 95%CI[97.55206,99.94794]
 global_boot("IS","Post","B")
-
+# 98.75000 97.55206 99.94794
 
 
 
 # Bpre vs Bmid
 perm_func("IS","IS","Pre","Mid","B","B")
-# -11.45833   1.00000   0.00000   0.88600   0.11200
+# -15.83333   1.00000   0.00000   0.96675   0.03200
 global_boot_2("IS","IS","Pre","Mid","B","B") 
-# -11.458333 -21.882283  -1.034384
+# -15.83333 -27.53501  -4.13166
 
 # Bpre vs Bpost
 perm_func("IS","IS","Pre","Post","B","B")
-# -45.75   1.00   0.00   1.00   0.00
+# -46.66667   1.00000   0.00000   1.00000   0.00000
 global_boot_2("IS","IS","Pre","Post","B","B")
-# -45.75000 -53.57834 -37.92166
+# -46.66667 -54.62106 -38.71227
 
 
 # Bmid vs Bpost
 perm_func("IS","IS","Mid","Post","B","B")
-# -34.29167   1.00000   0.00000   1.00000   0.00000
+# -30.83333   1.00000   0.00000   1.00000   0.00000
 global_boot_2("IS","IS","Mid","Post","B","B")
-# -34.29167 -42.11646 -26.46687
+# -30.83333 -39.43753 -22.22914
+
+
+
+#### C RATINGS AND MEASURES ####
+# Cpre:
+# Mean: 52.08; 95%CI[44.25578,59.91089]
+global_boot("IS","Pre","B")
+# 52.08333 44.25578 59.91089
+
+# Cmid:
+# Mean: 67.91667; 95%CI[59.40407,76.42926]
+global_boot("IS","Mid","B")
+# 67.91667 59.40407 76.42926
+
+# Cpost:
+# Mean: 48.33333; 95%CI[39.38302,57.28365]
+global_boot("IS","Post","C")
+# 48.33333 39.38302 57.28365
+
+
+
+# Cpre vs Cmid
+perm_func("IS","IS","Pre","Mid","C","C")
+# 0.4166667 0.9492500 0.0370000 0.4725000 0.5207500
+global_boot_2("IS","IS","Pre","Mid","C","C") 
+# 0.4166667 -10.8830480  11.7163813
+
+# Cpre vs Cpost
+perm_func("IS","IS","Pre","Post","C","C")
+# 4.37500 0.60675 0.38125 0.29950 0.69575
+global_boot_2("IS","IS","Pre","Post","C","C")
+# 4.375000 -7.359509 16.109509
+
+
+# Cmid vs Cpost
+perm_func("IS","IS","Mid","Post","C","C")
+# 3.958333 0.658000 0.327500 0.328000 0.664500
+global_boot_2("IS","IS","Mid","Post","C","C")
+# 3.958333 -8.177740 16.094407
+
+
 
 
 #### BAYES FACTOR TO COMPARE PRE- AND MID RATINGS OF OBJECT B IN THE IS CONDITION ####
 IS_subset_2 = subset(IS_subset, ! phase %in% c("Post"))
-IS_subset_3 = subset(IS_subset_2, ! objects %in% c("A","C"))
+IS_subset_3 = subset(IS_subset_2, ! objects %in% c("B","C"))
 # define the null and alternative models #
 lm.null = lme(measure~1, random=~1|ID, data=IS_subset_3)
 lm.alt = lme(measure~phase, random=~1|ID, data=IS_subset_3)
@@ -491,73 +608,114 @@ anova.lme(BB_subset_lme)
 #######################
 #### A RATINGS AND MEASURES ####
 # Apre:
-# Mean: 49.3750; 95%CI[42.3325,56.4175]
+# Mean: 47.95833; 95%CI[41.68105,54.23562]
 global_boot("BB","Pre","A")
+# 47.95833 41.68105 54.23562
 
 # Amid:
-# Mean: 57.50000; 95%CI[47.82757,67.17243]
+# Mean: 60.66667; 95%CI[51.60960,69.72373]
 global_boot("BB","Mid","A")
+# 60.66667 51.60960 69.72373
 
 # Apost:
-# Mean: 98.54167; 95%CI[96.35058,100.73276]
+# Mean: 92.95833; 95%CI[84.18414,101.73252]
 global_boot("BB","Post","A")
-
+# 92.95833  84.18414 101.73252
 
 # Apre vs Amid
 perm_func("BB","BB","Pre","Mid","A","A")
-# -8.12500  1.00000  0.00000  0.80975  0.18800
+# -12.70833   1.00000   0.00000   0.93325   0.06350
 global_boot_2("BB","BB","Pre","Mid","A","A") 
-# -8.12500 -20.02575   3.77575
+# -12.708333 -23.643729  -1.772937
 
 # Apre vs Apost
 perm_func("BB","BB","Pre","Post","A","A")
-# -49.16667   1.00000   0.00000   1.00000   0.00000
+# -45   1   0   1   0
 global_boot_2("BB","BB","Pre","Post","A","A")
-# -49.16667 -56.52526 -41.80807
+# -45.00000 -55.80508 -34.19492
 
 # Amid vs Apost
 perm_func("BB","BB","Mid","Post","A","A")
-# -41.04167   1.00000   0.00000   1.00000   0.00000
+# -32.29167   1.00000   0.00000   1.00000   0.00000
 global_boot_2("BB","BB","Mid","Post","A","A")
-# -41.04167 -51.01843 -31.06491
+# -32.29167 -44.86835 -19.71499
 
 
 #### B RATINGS AND MEASURES ####
 # Bpre:
-# Mean: 53.95833; 95%CI[48.22159,59.69507]
+# Mean: ; 95%CI[,]
 global_boot("BB","Pre","B")
+#45.41667 40.49397 50.33937
 
 # Bmid:
-# Mean: 57.70833; 95%CI[50.14964,65.26703]
+# Mean: 57.70833; 95%CI[47.99414,67.42252]
 global_boot("BB","Mid","B")
+# 57.70833 47.99414 67.42252
 
 # Bpost:
-# Mean: 49.16667; 95%CI[37.61650,60.71683]
+# Mean: 45.20833; 95%CI[34.07616,56.34051]
 global_boot("BB","Post","B")
-
+#  45.20833 34.07616 56.34051
 
 
 
 # Bpre vs Bmid
 perm_func("BB","BB","Pre","Mid","B","B")
-# -3.7500  1.0000  0.0000  0.6440  0.3515
+# -12.29167   1.00000   0.00000   0.92550   0.07125
 global_boot_2("BB","BB","Pre","Mid","B","B") 
-# -3.750000 -13.165556   5.665556
+# -12.291667 -23.180229  -1.403104
 
 # Bpre vs Bpost
 perm_func("BB","BB","Pre","Post","B","B")
-# 4.791667 0.617250 0.375000 0.304250 0.692250
+# 0.2083333 0.9760000 0.0120000 0.4815000 0.5120000
 global_boot_2("BB","BB","Pre","Post","B","B")
-# 4.791667 -8.062515 17.645849
+# 0.2083333 -11.9132980  12.3299647
 
 
 # Bmid vs Bpost
 perm_func("BB","BB","Mid","Post","B","B")
-# 8.541667 0.371750 0.619000 0.184250 0.812250
+# 12.50000  0.14775  0.85075  0.06675  0.93250
 global_boot_2("BB","BB","Mid","Post","B","B")
-# 8.541667 -5.214364 22.297697
+# 12.500000 -2.068473 27.068473
 
 
+#### C RATINGS AND MEASURES ####
+# Cpre:
+# Mean: 46.66667; 95%CI[38.38119,54.95214]
+global_boot("BB","Pre","C")
+# 46.66667 38.38119 54.95214
+
+# Cmid:
+# Mean: 44.16667; 95%CI[35.19274,53.14059]
+global_boot("BB","Mid","C")
+# 44.16667 35.19274 53.14059
+
+# Cpost:
+# Mean: 45.41667; 95%CI[35.35893,55.47440]
+global_boot("BB","Post","C")
+# 45.41667 35.35893 55.47440
+
+
+
+
+# Cpre vs Cmid
+perm_func("BB","BB","Pre","Mid","C","C")
+# 2.50000 0.75575 0.23000 0.37875 0.61425
+global_boot_2("BB","BB","Pre","Mid","C","C") 
+# 2.500000 -9.690093 14.690093
+
+# Cpre vs Cpost
+perm_func("BB","BB","Pre","Post","C","C")
+# 1.25000 0.86675 0.11950 0.43250 0.56175
+global_boot_2("BB","BB","Pre","Post","C","C")
+# 1.25000 -11.66125  14.16125
+
+
+# Cmid vs Cpost
+perm_func("BB","BB","Mid","Post","C","C")
+# -1.25000  1.00000  0.00000  0.55300  0.43825
+global_boot_2("BB","BB","Mid","Post","C","C")
+# -1.25000 -14.58547  12.08547
 
 
 

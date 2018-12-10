@@ -25,42 +25,55 @@ options(scipen=9999)
 
 # DATA CLEAN UP AND RESTRUCTURING #
 D = read.csv(file.choose(), header = TRUE, stringsAsFactors = FALSE)
-D = D[c(1:24),]
 
-D_tall = reshape(D, varying = 4:39, v.names = "measure", timevar = "condition", 
+# REMOVE OUTLIERS:
+  # Subjects were removed if any of their causal pre-ratings were 1.5 SDs
+  # above the mean of the pre-rating scores averaged over object type, event type, and condition
+
+D2 = data.frame()
+for(i in 1:nrow(D)){
+  if((D[i,c(2)]<=88.33933)&(D[i,c(3)]<=88.33933)&(D[i,c(4)]<=88.33933)&(D[i,c(5)]<=88.33933)&(D[i,c(14)]<=88.33933)&(D[i,c(15)]<=88.33933)&(D[i,c(16)]<=88.33933)&(D[i,c(17)]<=88.33933)&(D[i,c(26)]<=88.33933)&(D[i,c(27)]<=88.33933)&(D[i,c(28)]<=88.33933)&(D[i,c(29)]<=88.33933)&(D[i,c(38)]<=88.33933)&(D[i,c(39)]<=88.33933)&(D[i,c(40)]<=88.33933)&(D[i,c(41)]<=88.33933)) {
+    D2 =  rbind(D2 , D[i,]) 
+  } 
+}
+
+# RESHAPED OUTLIER REMOVED DATA
+D_tall = reshape(D, varying = 2:49, v.names = "measure", timevar = "condition", 
                  idvar = "ID", 
                  direction = "long")
 
 D_tall$measure = as.numeric(D_tall$measure)
-D_tall$sex = as.factor(D_tall$sex)
-D_tall$condition_order = as.factor(D_tall$condition_order)
 D_tall$condition = as.factor(D_tall$condition)
 
 D_tall = D_tall[order(D_tall$ID),]
 
 # ADD A CONDITION NAME COLUMN
-D_tall$condition_names = as.factor(rep(1:4, each = 9, times = 24))
+D_tall$condition_names = as.factor(rep(1:4, each = 12, times = 60))
 D_tall$condition_names = revalue(x = as.factor(D_tall$condition_names), 
                                  c("1" = "BB", "2"="IS", "3" = "1C", 
                                    "4" = "2C"))
 
 # ADD A 'PHASE' COLUMN
-D_tall$phase = as.factor(rep(1:3, each = 3, times = 96))
+D_tall$phase = as.factor(rep(1:3, each = 4, times = 240))
 D_tall$phase = revalue(x = as.factor(D_tall$phase), 
                        c("1" = "Pre", "2"="Mid", "3" = "Post"))
 
-# RENAME SEX COLUMN
-D_tall$sex = revalue(x = as.factor(D_tall$sex), 
-                     c("1" = "M", "2"="F"))
-
 # OBJECT COLUMN
-D_tall$objects = as.factor(rep(1:3, times = 288))
+D_tall$objects = as.factor(rep(1:2, each = 2, times = 720))
 D_tall$objects = revalue(x = as.factor(D_tall$objects), 
-                         c("1" = "A", "2"="B", "3"="C"))
+                         c("1" = "A", "2"="B"))
+
+# EVENT TYPE COLUMN
+D_tall$event_type = as.factor(rep(1:2, each = 1, times = 1440))
+D_tall$event_type = revalue(x = as.factor(D_tall$event_type), 
+                         c("1" = "Plus", "2"="Minus"))
 # REORDER COLUMNS'
 D_tall$condition = NULL
 D_tall$row.names = NULL
-D_tall = D_tall[,c(1,2,4,5,6,3)]
+D_tall = D_tall[,c(1,3,4,5,6,2)]
+
+
+
 
 ########################################################
 #############                              #############
@@ -564,6 +577,13 @@ global_boot_2("BB","BB","Mid","Post","B","B")
 #############################################################
 # COMPARE POST-RATING OF B BETWEEN THE BB AND IS CONDITIONS #
 #############################################################
+# Bpost BB:
+# Mean: 49.16667; 95%CI[37.61650,60.71683]
+global_boot("BB","Post","B")
+
+# Bpost IS:
+# Mean: 97.08333; 95%CI[94.14307,100.02360]
+global_boot("IS","Post","B")
 
 perm_func("IS","IS","Mid","Post","B","B")
 # -34.29167   1.00000   0.00000   1.00000   0.00000
@@ -612,10 +632,6 @@ condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge",
 
 
 
-
-
-
-
 ##############################################################################
 ##############################################################################
 ##############################################################################
@@ -625,11 +641,12 @@ condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge",
 ##############################################################################
 ##############################################################################
 ##############################################################################
+# FOR ALL THE CONDITIONS
 condition_barplot = ggplot(D_tall, aes(objects, measure, fill = phase)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
 condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
   stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
   ylab("ratings (scale: 0-100)") + # change the label of the y-axis
-  facet_wrap(condition_names, labeller = label_wrap_gen(multi_line=FALSE)) + # scales='free' ensures that each blot has x labels
+  facet_wrap(ID~condition_names, labeller = label_wrap_gen(multi_line=FALSE)) + # scales='free' ensures that each blot has x labels
   theme_bw() + # remove the gray background
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + # remove the major and minor grids
@@ -652,6 +669,30 @@ condition_barplot = ggplot(BB_subset, aes(objects, measure, fill = phase)) # cre
 condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
   stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
   ylab("ratings (scale: 0-100)") + # change the label of the y-axis
+  facet_wrap(event_type~ID, labeller = label_wrap_gen(multi_line=FALSE)) + # scales='free' ensures that each blot has x labels
+  theme_bw() + # remove the gray background
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + # remove the major and minor grids
+  scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
+  coord_cartesian(ylim=c(0, 110)) +
+  theme_classic() +
+  scale_fill_manual(values = c("white","gray68", "black")) +
+  theme(strip.text = element_text(colour = 'black', size = 12)) + # this changes the size and potentially weight of the facet labels
+  theme(axis.title=element_text(size="12"),axis.text=element_text(size=12)) + 
+  theme(legend.box.background = element_rect(), legend.box.margin = margin(6, 6, 6, 6)) +
+  theme(legend.text = element_text(size = 12)) + 
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf) + # this adds a vertical & horizontal line to each plot
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) + # ditto
+  theme(legend.title=element_blank()) +
+  labs(x = "Test trials")
+
+
+
+# FOR THE IS CONDITION ONLY
+condition_barplot = ggplot(IS_subset, aes(objects, measure, fill = phase)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
+condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
+  stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
+  ylab("ratings (scale: 0-100)") + # change the label of the y-axis
   facet_wrap(~ID, scales = 'free') + # scales='free' ensures that each blot has x labels
   theme_bw() + # remove the gray background
   theme(panel.grid.major = element_blank(),
@@ -669,3 +710,122 @@ condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge",
   theme(legend.title=element_blank()) +
   labs(x = "Test trials")
 
+
+
+
+
+
+
+##############################################################################
+##############################################################################
+##############################################################################
+#############                                                    #############
+#############            OUTLIER CHECK FIGURES                   #############
+#############                                                    #############
+##############################################################################
+##############################################################################
+##############################################################################
+# FOR THE BB CONDITION ONLY
+E_tall = D_tall[c(1:720),]
+BB_subset_4 = subset(E_tall, ! phase %in% c("Mid","Post"))
+
+F_tall = D_tall[c(721:1440),]
+BB_subset_5 = subset(F_tall, ! phase %in% c("Mid","Post"))
+
+
+G_tall = D_tall[c(1441:2160),]
+BB_subset_6 = subset(G_tall, ! phase %in% c("Mid","Post"))
+
+H_tall = D_tall[c(2161:2880),]
+BB_subset_7 = subset(H_tall, ! phase %in% c("Mid","Post"))
+
+# FIRST 15 SUBJECTS
+condition_barplot = ggplot(BB_subset_4, aes(objects, measure, fill = event_type)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
+condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
+  stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
+  ylab("ratings (scale: 0-100)") + # change the label of the y-axis
+  facet_wrap(ID~condition_names, labeller = label_wrap_gen(multi_line=FALSE)) + # scales='free' ensures that each blot has x labels
+  theme_bw() + # remove the gray background
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + # remove the major and minor grids
+  scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
+  coord_cartesian(ylim=c(0, 110)) +
+  theme_classic() +
+  scale_fill_manual(values = c("white","gray68", "black")) +
+  theme(strip.text = element_text(colour = 'black', size = 12)) + # this changes the size and potentially weight of the facet labels
+  theme(axis.title=element_text(size="12"),axis.text=element_text(size=12)) + 
+  theme(legend.box.background = element_rect(), legend.box.margin = margin(6, 6, 6, 6)) +
+  theme(legend.text = element_text(size = 12)) + 
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf) + # this adds a vertical & horizontal line to each plot
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) + # ditto
+  theme(legend.title=element_blank()) +
+  labs(x = "Test trials")
+
+
+# SECOND 15 SUBJECTS
+condition_barplot = ggplot(BB_subset_5, aes(objects, measure, fill = event_type)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
+condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
+  stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
+  ylab("ratings (scale: 0-100)") + # change the label of the y-axis
+  facet_wrap(ID~condition_names, labeller = label_wrap_gen(multi_line=FALSE)) + # scales='free' ensures that each blot has x labels
+  theme_bw() + # remove the gray background
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + # remove the major and minor grids
+  scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
+  coord_cartesian(ylim=c(0, 110)) +
+  theme_classic() +
+  scale_fill_manual(values = c("white","gray68", "black")) +
+  theme(strip.text = element_text(colour = 'black', size = 12)) + # this changes the size and potentially weight of the facet labels
+  theme(axis.title=element_text(size="12"),axis.text=element_text(size=12)) + 
+  theme(legend.box.background = element_rect(), legend.box.margin = margin(6, 6, 6, 6)) +
+  theme(legend.text = element_text(size = 12)) + 
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf) + # this adds a vertical & horizontal line to each plot
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) + # ditto
+  theme(legend.title=element_blank()) +
+  labs(x = "Test trials")
+
+# THIRD 15 SUBJECTS
+condition_barplot = ggplot(BB_subset_6, aes(objects, measure, fill = event_type)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
+condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
+  stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
+  ylab("ratings (scale: 0-100)") + # change the label of the y-axis
+  facet_wrap(ID~condition_names, labeller = label_wrap_gen(multi_line=FALSE)) + # scales='free' ensures that each blot has x labels
+  theme_bw() + # remove the gray background
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + # remove the major and minor grids
+  scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
+  coord_cartesian(ylim=c(0, 110)) +
+  theme_classic() +
+  scale_fill_manual(values = c("white","gray68", "black")) +
+  theme(strip.text = element_text(colour = 'black', size = 12)) + # this changes the size and potentially weight of the facet labels
+  theme(axis.title=element_text(size="12"),axis.text=element_text(size=12)) + 
+  theme(legend.box.background = element_rect(), legend.box.margin = margin(6, 6, 6, 6)) +
+  theme(legend.text = element_text(size = 12)) + 
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf) + # this adds a vertical & horizontal line to each plot
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) + # ditto
+  theme(legend.title=element_blank()) +
+  labs(x = "Test trials")
+
+
+
+# FOURTH 15 SUBJECTS
+condition_barplot = ggplot(BB_subset_7, aes(objects, measure, fill = event_type)) # create the bar graph with test.trial.2 on the x-axis and measure on the y-axis
+condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
+  stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
+  ylab("ratings (scale: 0-100)") + # change the label of the y-axis
+  facet_wrap(ID~condition_names, labeller = label_wrap_gen(multi_line=FALSE)) + # scales='free' ensures that each blot has x labels
+  theme_bw() + # remove the gray background
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + # remove the major and minor grids
+  scale_y_continuous(expand = c(0, 0)) + # ensure that bars hit the x-axis
+  coord_cartesian(ylim=c(0, 110)) +
+  theme_classic() +
+  scale_fill_manual(values = c("white","gray68", "black")) +
+  theme(strip.text = element_text(colour = 'black', size = 12)) + # this changes the size and potentially weight of the facet labels
+  theme(axis.title=element_text(size="12"),axis.text=element_text(size=12)) + 
+  theme(legend.box.background = element_rect(), legend.box.margin = margin(6, 6, 6, 6)) +
+  theme(legend.text = element_text(size = 12)) + 
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf) + # this adds a vertical & horizontal line to each plot
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) + # ditto
+  theme(legend.title=element_blank()) +
+  labs(x = "Test trials")

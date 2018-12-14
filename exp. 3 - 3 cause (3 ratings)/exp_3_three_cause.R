@@ -175,9 +175,6 @@ global_boot_2 = function(s1,s2,p1,p2,o1,o2){
     boot_obj$t0  + 1.96*sd(boot_obj$t))
 }
 
-
-
-
 ############################
 ### PRELIMINARY ANALYSES ###
 ############################

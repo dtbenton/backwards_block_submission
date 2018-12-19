@@ -1,0 +1,103 @@
+addNet backwardsBlocking
+
+# input groups
+addGroup Object_A 12 INPUT
+addGroup Object_B 12 INPUT
+addGroup Object_C 12 INPUT
+addGroup Position_A 2 INPUT
+addGroup Position_B 2 INPUT
+addGroup Position_C 2 INPUT
+addGroup Input_Activation 2 INPUT
+
+# hidden group
+#hippocampal system
+addGroup hidden 30
+
+#cortical system
+addGroup hidden2 10 
+
+
+# output group 
+addGroup Output_Activation 2 OUTPUT
+
+# connect groups (input => hidden => output)
+# input to hidden and hidden2 
+# Below implements to the two systems
+connectGroups {Object_A Object_B Object_C Position_A Position_B Position_C} hidden  -type hp
+connectGroups {Object_A Object_B Object_C Position_A Position_B Position_C} hidden2 -type cortex
+connectGroups hidden hidden2 -type hp
+
+connectGroups hidden Output_Activation -type hp
+connectGroups hidden2 Output_Activation -type cortex
+
+# fast system parameters
+setLinkValues weightDecay .001 -type hp
+setLinkValues learningRate .2 -type hp
+
+# slow system parameters
+setLinkValues weightDecay .0001 -type cortex
+setLinkValues learningRate .001 -type hp
+
+# training examples: 
+loadExamples pretrain_backwards_blocking_new.ex
+loadExamples AB_backwards_blocking.ex
+loadExamples A_backwards_blocking.ex
+loadExamples test_backwards_blocking.ex
+
+# set learning and display parameters
+setObj learningRate 0.08
+setObj momentum	    0.9
+setObj batchSize    0
+setObj numUpdates   10
+setObj reportInterval 1
+setObj unitCellSize 20
+setObj linkCellSize 10 
+setObj weightDecay 0.001
+
+# initialize small random weights
+#randWeights -r .01
+
+
+# the commands below specify how the network will be displayed in Lens
+resetPlot 
+plotRow 2 b 5 n Output_Activation 2  
+plotRow 8 b 4 n hidden 5 b 2 n hidden2 5
+plotRow 5 b 1 n Object_A 3 b 1 n Position_A 2 b 2 n Object_B 3 b 1 n Position_B 2 
+plotRow 6 b 1 n Object_C 3 b 2 n Position_C 2
+plotRow 5 b 1 n Input_Activation 2
+drawUnits
+viewUnits
+
+
+
+proc	printHUtrain {fileName layer}	{
+	set fileHandle [open $fileName.csv a]
+
+	repeat k [getObj trainingSet.numExamples]	{
+		doExample $k -train -set [getObj trainingSet.name]
+		put -nonewline $fileHandle [getObj currentExample.name],
+		put -nonewline $fileHandle "  "
+		repeat j [getObj $layer.numUnits]	{
+			put -nonewline $fileHandle [getObj $layer.unit($j).output],
+			put -nonewline $fileHandle " "
+		}
+		puts $fileHandle ""
+	}
+	close $fileHandle
+}
+
+proc	printHUtest {fileName layer}	{
+	set fileHandle [open $fileName.csv a]
+
+	repeat k [getObj testingSet.numExamples]	{
+		doExample $k -test -set [getObj testingSet.name]
+		put -nonewline $fileHandle [getObj currentExample.name],
+		put -nonewline $fileHandle "  "
+		repeat j [getObj $layer.numUnits]	{
+			put -nonewline $fileHandle [getObj $layer.unit($j).output],
+			put -nonewline $fileHandle " "
+		}
+		puts $fileHandle ""
+	}
+	close $fileHandle
+}

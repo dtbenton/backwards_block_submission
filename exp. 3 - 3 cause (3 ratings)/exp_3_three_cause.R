@@ -676,6 +676,22 @@ global_boot_2("BB","BB","Mid","Post","B","B")
 # 12.500000 -2.068473 27.068473
 
 
+#### BAYES FACTOR TO COMPARE PRE- AND MID RATINGS OF OBJECT B IN THE IS CONDITION ####
+BB_subset_2 = subset(BB_subset, ! phase %in% c("Pre"))
+BB_subset_3 = subset(BB_subset_2, ! objects %in% c("A","C"))
+# define the null and alternative models #
+lm.null = lme(measure~1, random=~1|ID, data=BB_subset_3)
+lm.alt = lme(measure~phase, random=~1|ID, data=BB_subset_3)
+
+#obtain BICs for the null and alternative models
+null.bic = BIC(lm.null)
+alt.bic = BIC(lm.alt)
+
+# compute the BF01  - this is the BF whose value is interpreted as the evidence in favor of the null (e.g., if the BF01 = 2.6, this means that there is 2.6 times as much evidence for the null than for the alternative or the evidence is 2.6:1 in favor of the null)
+
+BF01 = exp((alt.bic - null.bic)/2) # this yields a BF that is interpreted as the evidence in favor of the null; it's critical that the alt.bic comes first otherwise your interpretation of the resulting BF value will be incorrect
+BF10 = 1/BF01
+
 #### C RATINGS AND MEASURES ####
 # Cpre:
 # Mean: 46.66667; 95%CI[38.38119,54.95214]

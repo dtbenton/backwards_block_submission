@@ -7,7 +7,7 @@ addGroup Object_C 12 INPUT
 addGroup Position_A 2 INPUT
 addGroup Position_B 2 INPUT
 addGroup Position_C 2 INPUT
-addGroup Input_Activation 2 INPUT
+addGroup Input_Activation 1 INPUT
 
 # hidden group
 #hippocampal system
@@ -18,7 +18,7 @@ addGroup hidden2 10
 
 
 # output group 
-addGroup Output_Activation 2 OUTPUT
+addGroup Output_Activation 1 OUTPUT
 
 # connect groups (input => hidden => output)
 # input to hidden and hidden2 
@@ -39,10 +39,11 @@ setLinkValues weightDecay .0001 -type cortex
 setLinkValues learningRate .001 -type hp
 
 # training examples: 
-loadExamples pretrain_backwards_blocking_new.ex
+#loadExamples pretrain_backwards_blocking_new.ex
 loadExamples AB_backwards_blocking.ex
-loadExamples A_backwards_blocking.ex
-loadExamples test_backwards_blocking.ex
+loadExamples fauxtest.ex
+#loadExamples A_backwards_blocking.ex
+#loadExamples test_backwards_blocking.ex
 
 # set learning and display parameters
 setObj learningRate 0.08
@@ -55,16 +56,16 @@ setObj linkCellSize 10
 setObj weightDecay 0.001
 
 # initialize small random weights
-#randWeights -r .01
+randWeights -r .01
 
 
 # the commands below specify how the network will be displayed in Lens
 resetPlot 
-plotRow 2 b 5 n Output_Activation 2  
+plotRow 2 b 5 n Output_Activation 1  
 plotRow 8 b 4 n hidden 5 b 2 n hidden2 5
 plotRow 5 b 1 n Object_A 3 b 1 n Position_A 2 b 2 n Object_B 3 b 1 n Position_B 2 
 plotRow 6 b 1 n Object_C 3 b 2 n Position_C 2
-plotRow 5 b 1 n Input_Activation 2
+plotRow 5 b 1 n Input_Activation 1
 drawUnits
 viewUnits
 

@@ -42,7 +42,7 @@ setLinkValues learningRate .001 -type hp
 #loadExamples pretrain_backwards_blocking_new.ex
 loadExamples AB_backwards_blocking.ex
 loadExamples fauxtest.ex
-#loadExamples A_backwards_blocking.ex
+loadExamples A_backwards_blocking.ex
 #loadExamples test_backwards_blocking.ex
 
 # set learning and display parameters

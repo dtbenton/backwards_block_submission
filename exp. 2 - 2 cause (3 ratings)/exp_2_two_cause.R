@@ -636,7 +636,7 @@ condition_barplot = ggplot(D_tall, aes(objects, measure, fill = phase)) # create
 condition_barplot + stat_summary(fun.y = mean, geom = "bar", position = "dodge", colour = "black") + # add the bars, which represent the means and the place them side-by-side with 'dodge'
   stat_summary(fun.data=mean_cl_boot, geom = "errorbar", position = position_dodge(width=0.90), width = 0.2) + # add errors bars
   ylab("ratings (scale: 0-100)") + # change the label of the y-axis
-  facet_wrap(ID~condition_names, labeller = label_wrap_gen(multi_line=FALSE)) + # scales='free' ensures that each blot has x labels
+  facet_wrap(ID~condition_names, labeller = label_wrap_gen(multi_line=FALSE)) +rm() # scales='free' ensures that each blot has x labels
   theme_bw() + # remove the gray background
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) + # remove the major and minor grids

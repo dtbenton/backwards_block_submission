@@ -85,7 +85,7 @@ for(i in 1:16) {
 boxplot(D_tall$measure~D_tall$norm_col) 
 
 # formal test of equal variance
-leveneTest(D_tall$measure, as.factor(D_tall$norm_col), center=median) # used 'median' because it's a better measure of central tendency given the non-normality
+leveneTest(D_tall$measure, as.factor(D_tall$condition_names), center=median) # used 'median' because it's a better measure of central tendency given the non-normality
 
 
 

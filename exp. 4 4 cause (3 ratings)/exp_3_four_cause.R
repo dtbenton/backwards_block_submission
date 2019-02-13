@@ -34,7 +34,7 @@ D_tall = reshape(D, varying = 4:51, v.names = "measure", timevar = "condition",
 D_tall$measure = as.numeric(D_tall$measure)
 D_tall$sex = as.factor(D_tall$sex)
 D_tall$condition = as.factor(D_tall$condition)
-D_tall$condition_order = as.factor(D_tall$condition_order)
+
 
 D_tall = D_tall[order(D_tall$ID),]
 
@@ -811,18 +811,11 @@ global_boot_2("BB","BB","Mid","Post","D","D")
 #############################################################
 # COMPARE POST-RATING OF B BETWEEN THE BB AND IS CONDITIONS #
 #############################################################
-
-perm_func("IS","IS","Mid","Post","B","B")
-# -34.29167   1.00000   0.00000   1.00000   0.00000
-global_boot_2("IS","IS","Mid","Post","B","B")
-# -34.29167 -42.11646 -26.46687
-
-
 perm_func("IS","BB","Post","Post","B","B")
-# 47.91667  0.00000  1.00000  0.00000  1.00000
+# 49.25  0.00  1.00  0.00  1.00
 
 global_boot_2("IS","BB","Post","Post","B","B")
-# 47.91667 35.91580 59.91753
+# 49.25000 36.67355 61.82645
 
 
 

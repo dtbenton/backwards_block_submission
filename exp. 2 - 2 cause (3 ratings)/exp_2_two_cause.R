@@ -567,6 +567,7 @@ global_boot_2("BB","BB","Mid","Post","B","B")
 #############################################################
 # COMPARE POST-RATING OF B BETWEEN THE BB AND IS CONDITIONS #
 #############################################################
+## CROSS-CONDITION ANALYSES FOR OBJECT A ##
 # Bpost BB:
 # Mean: 49.16667; 95%CI[37.61650,60.71683]
 global_boot("BB","Post","B")
@@ -586,6 +587,13 @@ perm_func("IS","BB","Post","Post","B","B")
 
 global_boot_2("IS","BB","Post","Post","B","B")
 # 47.91667 35.91580 59.91753
+
+## CROSS-CONDITION ANALYSES FOR OBJECT B ##
+# Apost BB:
+# Mean: 98.54167; 95%CI[96.35058,100.73276]
+
+# Apost IS:
+# Mean: 1.8750000; 95%CI[-0.3801578,4.1301578]
 
 
 

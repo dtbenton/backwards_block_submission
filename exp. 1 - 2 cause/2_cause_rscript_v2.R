@@ -705,6 +705,66 @@ ci.BpostISvBB = 48.06667 + 1.96*c(-3.287434,3.287434)
 
 
 
+          #######
+######################
+###########################
+## A post BB vs A post in IS ##
+###########################
+#######################
+          #######
+
+# subset full data set to include only pre- and post-ratings 
+# of A in the 1C condition
+subApreApostIS = subset(D_tall, ! condition %in% c(1:3,5:7,9:16))
+subApreApostIS$condition = factor(subApreApostIS$condition)
+
+# run model
+lme.fit.BBb = lme(measure~condition, random=~1|ID, data=subD11)
+
+
+# summary of model 
+summary(lme.fit.BBb)
+
+# get ANOVA results for lme model
+anova.lme(lme.fit.BBb)
+
+# PERMUTATION TESTING
+b = rep(0,4000) 
+
+for(i in 1:4000){
+  y = sample(subD11$measure, replace=TRUE)
+  lm_1 = lme(y ~ condition, random=~1|ID, data=subD11) 
+  b[i] = fixed.effects(lm_1)[2]
+}
+
+# run the model to see what the second coefficient actually is (or 1st if you're interested in the mean of reference group)
+lm.fit = lme(measure~condition, random=~1|ID, data=subD10)
+beta_actual = fixed.effects(lm.fit)[2]
+
+# construct a histogram of using the 1000 values of b: 
+hist(b)
+abline(v = beta_actual, col = "blue", lwd = 2)
+
+# place the beta_actual (the true beta) on the histogram to see how plausible it is under the H0:
+segments(beta_actual,0,beta_actual,200, col="green")
+
+# compute the p-value for your actual statistic based on the null distribution that was generated:
+sum(b < beta_actual) #number of actual cases that are greater than the actual beta
+sum(abs(b) < beta_actual)/4000 #p-value, two-tailed
+sum(b < beta_actual)/4000 #p-value, one-tailed
+
+
+set.seed(2017)
+bbB2c.lme.Bootobj = boot(subD11, bbB2C.lme.fit , R=4000) # note that I didn't rename the object
+# out of laziness, but clearly
+# I'm using the pre- and post-ratings
+# of B in the BB condition.
+bbB2c.lme.Bootobj
+
+# obtain 95% CI from SE from the 'boot' analysis above
+ci.BppostBB = 42.25000 + 1.96*c(-2.274312, 2.274312)
+ci.BpostISvBB = 48.06667 + 1.96*c(-3.287434,3.287434)
+
 #####
 # Clustered Bar Graph
 #####

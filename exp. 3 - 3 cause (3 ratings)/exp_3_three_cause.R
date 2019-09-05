@@ -20,6 +20,7 @@ library(ggsignif)
 library(lsr)
 library(sjmisc)
 library(sjstats)
+library(BayesFactor)
 options(scipen=9999)
 
 
@@ -675,22 +676,15 @@ perm_func("BB","BB","Mid","Post","B","B")
 global_boot_2("BB","BB","Mid","Post","B","B")
 # 12.500000 -2.068473 27.068473
 
+#######################################################################################
+#### BAYES FACTOR TO COMPARE MID- and POST-RATINGS OF OBJECT B IN THE BB CONDITION ####
+#######################################################################################
+x = D_tall$measure[D_tall$condition_names=="BB" & D_tall$objects=="B" & D_tall$phase=="Mid"]
+y = D_tall$measure[D_tall$condition_names=="BB" & D_tall$objects=="B" & D_tall$phase=="Post"]
 
-#### BAYES FACTOR TO COMPARE PRE- AND MID RATINGS OF OBJECT B IN THE IS CONDITION ####
-BB_subset_2 = subset(BB_subset, ! phase %in% c("Pre"))
-BB_subset_3 = subset(BB_subset_2, ! objects %in% c("A","C"))
-# define the null and alternative models #
-lm.null = lme(measure~1, random=~1|ID, data=BB_subset_3)
-lm.alt = lme(measure~phase, random=~1|ID, data=BB_subset_3)
+BF_bb_B_prepost = ttestBF(x=x,y=y,paired=TRUE)
+BF_bb_B_prepost
 
-#obtain BICs for the null and alternative models
-null.bic = BIC(lm.null)
-alt.bic = BIC(lm.alt)
-
-# compute the BF01  - this is the BF whose value is interpreted as the evidence in favor of the null (e.g., if the BF01 = 2.6, this means that there is 2.6 times as much evidence for the null than for the alternative or the evidence is 2.6:1 in favor of the null)
-
-BF01 = exp((alt.bic - null.bic)/2) # this yields a BF that is interpreted as the evidence in favor of the null; it's critical that the alt.bic comes first otherwise your interpretation of the resulting BF value will be incorrect
-BF10 = 1/BF01
 
 #### C RATINGS AND MEASURES ####
 # Cpre:
@@ -733,8 +727,24 @@ global_boot_2("BB","BB","Mid","Post","C","C")
 
 
 #############################################################
-# COMPARE POST-RATING OF B BETWEEN THE BB AND IS CONDITIONS #
+# COMPARE POST-RATING OF A and B BETWEEN THE BB AND IS CONDITIONS #
 #############################################################
+# A post BB
+# Mean: 10.208333; 95%CI[2.261944,18.154723]
+global_boot("IS","Post","A")
+# 10.208333  2.261944 18.154723
+
+# A post IS
+# Mean: 92.95833; 95%CI[84.18414,101.73252]
+global_boot("BB","Post","A")
+# 92.95833  84.18414 101.73252
+
+perm_func("IS","BB","Post","Post","A","A")
+# -82.75   1.00   0.00   1.00   0.00
+
+global_boot_2("IS","BB","Post","Post","A","A")
+# -82.75000 -94.77496 -70.72504
+
 perm_func("IS","BB","Post","Post","B","B")
 # 53.54167  0.00000  1.00000  0.00000  1.00000
 

@@ -20,6 +20,7 @@ library(ggsignif)
 library(lsr)
 library(sjmisc)
 library(sjstats)
+library(BayesFactor)
 options(scipen=9999)
 
 
@@ -581,7 +582,7 @@ perm_func("IS","IS","Mid","Post","B","B")
 global_boot_2("IS","IS","Mid","Post","B","B")
 # -34.29167 -42.11646 -26.46687
 
-
+# Hypothesis (p-value) and Boostrapped CIs tests of and for the difference between B_IS_Post and B_BB_Post
 perm_func("IS","BB","Post","Post","B","B")
 # 47.91667  0.00000  1.00000  0.00000  1.00000
 
@@ -591,10 +592,17 @@ global_boot_2("IS","BB","Post","Post","B","B")
 ## CROSS-CONDITION ANALYSES FOR OBJECT B ##
 # Apost BB:
 # Mean: 98.54167; 95%CI[96.35058,100.73276]
+global_boot("BB","Post","A")
 
 # Apost IS:
 # Mean: 1.8750000; 95%CI[-0.3801578,4.1301578]
+global_boot("IS","Post","A")
 
+perm_func("IS","BB","Post","Post","A","A")
+# -96.66667   1.00000   0.00000   1.00000   0.00000
+
+global_boot_2("IS","BB","Post","Post","A","A")
+# -96.66667 -99.84226 -93.49107
 
 
 

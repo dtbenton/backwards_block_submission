@@ -20,6 +20,7 @@ library(ggsignif)
 library(lsr)
 library(sjmisc)
 library(sjstats)
+library(BayesFactor)
 options(scipen=9999)
 
 
@@ -65,7 +66,7 @@ D_tall$objects = revalue(x = as.factor(D_tall$objects),
 # REORDER COLUMNS'
 D_tall$condition = NULL
 D_tall$row.names = NULL
-D_tall = D_tall[,c(1,2,4,5,6,3)]
+D_tall = D_tall[,c(1,2,3,5,6,7,4)]
 
 ########################################################
 #############                              #############
@@ -620,6 +621,15 @@ alt.bic = BIC(lm.alt)
 BF01 = exp((alt.bic - null.bic)/2) # this yields a BF that is interpreted as the evidence in favor of the null; it's critical that the alt.bic comes first otherwise your interpretation of the resulting BF value will be incorrect
 BF10 = 1/BF01
 
+## MORE APPROPRIATE METHOD FOR COMPUTING A BAYES' FACTOR ##
+## COMPARING B-PRE AND B-MID IN THE IS CONDITION ##
+x = D_tall$measure[D_tall$condition_names=="IS" & D_tall$objects=="B" & D_tall$phase=="Pre"]
+y = D_tall$measure[D_tall$condition_names=="IS" & D_tall$objects=="B" & D_tall$phase=="Mid"]
+
+BF_bb_B_prepost = ttestBF(x=x,y=y,paired=TRUE)
+BF_bb_B_prepost
+
+
 
 
 ################
@@ -730,6 +740,16 @@ alt.bic = BIC(lm.alt)
 BF01 = exp((alt.bic - null.bic)/2) # this yields a BF that is interpreted as the evidence in favor of the null; it's critical that the alt.bic comes first otherwise your interpretation of the resulting BF value will be incorrect
 BF10 = 1/BF01
 
+## MORE APPROPRIATE METHOD FOR COMPUTING A BAYES' FACTOR ##
+## COMPARING B-MID AND B-POST IN THE BB CONDITION ##
+x2 = D_tall$measure[D_tall$condition_names=="BB" & D_tall$objects=="B" & D_tall$phase=="Mid"]
+y2 = D_tall$measure[D_tall$condition_names=="BB" & D_tall$objects=="B" & D_tall$phase=="Post"]
+mean(x2)
+mean(y2)
+
+BF_bb_B_prepost = ttestBF(x=x2,y=y2,paired=TRUE)
+BF_bb_B_prepost
+
 #### C RATINGS AND MEASURES ####
 # Cpre:
 # Mean: 50.0000; 95%CI[44.6435,55.3565]
@@ -808,9 +828,23 @@ perm_func("BB","BB","Mid","Post","D","D")
 global_boot_2("BB","BB","Mid","Post","D","D")
 # 2.950000 -3.732969  9.632969
 
-#############################################################
-# COMPARE POST-RATING OF B BETWEEN THE BB AND IS CONDITIONS #
-#############################################################
+###################################################################
+# COMPARE POST-RATING OF A and B BETWEEN THE BB AND IS CONDITIONS #
+###################################################################
+# OBJECT A POST RATINGS ACROSS THE BB AND IS CONDITIONS #
+# Apost_IS:
+# Mean: 8.25; 95%CI[-1.86,18.36]
+global_boot("IS","Post","A")
+
+# Apost_BB:
+# Mean: 99.75; 95%CI[99.25,100.25]
+global_boot("BB","Post","A")
+
+
+perm_func("IS","BB","Post","Post","B","B")
+global_boot_2("IS","BB","Post","Post","B","B")
+
+# OBJECT B POST RATINGS ACROSS THE BB AND IS CONDITIONS #
 perm_func("IS","BB","Post","Post","B","B")
 # 49.25  0.00  1.00  0.00  1.00
 

@@ -150,7 +150,7 @@ V_tall$objects = revalue(x = as.factor(V_tall$objects),
 # REORDER COLUMNS'
 V_tall$condition = NULL
 V_tall$row.names = NULL
-V_tall = V_tall[,c(1,2,4,5,6,3)]
+V_tall = V_tall[,c(1,4,6,7,3)]
 
 
 
@@ -316,3 +316,24 @@ alt.bic.4 = BIC(lm.alt.4)
 
 BF01.4 = exp((alt.bic.4 - null.bic.4)/2) # this yields a BF that is interpreted as the evidence in favor of the null; it's critical that the alt.bic comes first otherwise your interpretation of the resulting BF value will be incorrect
 BF10.4 = 1/BF01.4
+
+
+
+#############################
+# RECOMPUTED BAYES' FACTORS #
+#############################
+BBbpremidExp1 = D_tall$measure[D_tall$condition_names=="BB" & D_tall$phase=="Pre" & D_tall$objects=="B"]-
+  D_tall$measure[D_tall$condition_names=="BB" & D_tall$phase=="Mid" & D_tall$objects=="B"]
+
+BBbpremidExp2 = R_tall$measure[R_tall$condition_names=="BB" & R_tall$phase=="Pre" & R_tall$objects=="B"]-
+  R_tall$measure[R_tall$condition_names=="BB" & R_tall$phase=="Mid" & R_tall$objects=="B"]
+
+BBbpremidExp3 = V_tall$measure[V_tall$condition_names=="BB" & V_tall$phase=="Pre" & V_tall$objects=="B"]-
+  V_tall$measure[V_tall$condition_names=="BB" & V_tall$phase=="Mid" & V_tall$objects=="B"]
+
+# exp1 vs exp2
+ttestBF(x=BBbpremidExp1,y=BBbpremidExp2,paired=FALSE)
+
+# exp1 vs exp3
+ttestBF(x=BBbpremidExp1,y=BBbpremidExp3,paired=FALSE)
+

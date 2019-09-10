@@ -26,16 +26,20 @@ options(scipen=9999)
 # load data
 D = read.csv(file.choose(), header = TRUE, stringsAsFactors = FALSE)
 D = D[c(1:68),c(1:3)]
+D$ID = c(1:68)
+
+# reorder 'D' columns so 'ID' is first
+D = D[,c(4,1,2,3)]
 
 # data restructring
-D_tall = reshape(D, varying = 2:3, v.names = "measure", timevar = "condition", 
+D_tall = reshape(D, varying = 3:4, v.names = "measure", timevar = "condition", 
                  idvar = "ID", 
                  direction = "long")
 
 # add 'exp' name column
 D$Exp = revalue(x = as.factor(D$Exp), 
                 c("1" = "Exp1", "2"="Exp2",
-                  "3" = "Exp4"))
+                  "3" = "Exp3"))
 
 # rename 'condition' column to 'ratingType'
 D_tall$condition = revalue(x = as.factor(D_tall$condition), 
@@ -45,8 +49,8 @@ D_tall$condition = revalue(x = as.factor(D_tall$condition),
 D_tall = D_tall[order(D_tall$Exp),]
 
 
-# remove 'ID' column
-D_tall$ID = NULL
+# remove 'row.names' column
+D_tall$row.names = NULL
 
 
 
@@ -123,7 +127,23 @@ global_boot_2 = function(s1,s2,p1,p2){
 # MAIN ANALYSIS DIFFERENCE #
 ############################
 
-# Experiment 1 vs Experiment 2 comparison
+# Experiment 1 vs Experiment 2 BB comparison #
+onevstwosub = subset(D_tall, ! Exp %in% c("Exp3")) 
+onevstwosub = subset(onevstwosub, ! condition %in% c("modifiedRW")) 
+
+# creating a smaller
+# data set by removing the 
+# BB and IS conditions.
+
+# 1C condition
+onevstwosub_lme = lme(measure~Exp, 
+                      random=~1|ID,
+                      data=onevstwosub)
+
+# omnibus ANOVA
+summary(onevstwosub_lme)
+anova.lme(onevstwosub_lme)
+
 perm_func("Bayesian","Bayesian","Exp1","Exp2")
 global_boot_2("Bayesian","Bayesian","Exp1","Exp2")
 
@@ -135,9 +155,26 @@ BF1 = ttestBF(x=x,y=y,paired=TRUE)
 BF1
 
 
-# Experiment 1 vs Experiment 3 comparison
-perm_func("Bayesian","Bayesian","Exp1","Exp4")
-global_boot_2("Bayesian","Bayesian","Exp1","Exp4")
+# Experiment 1 vs Experiment 3 BB comparison #
+onevsthreesub = subset(D_tall, ! Exp %in% c("Exp2")) 
+onevsthreesub = subset(onevsthreesub, ! condition %in% c("modifiedRW")) 
+
+# creating a smaller
+# data set by removing the 
+# BB and IS conditions.
+
+# 1C condition
+onevsthreesub_lme = lme(measure~Exp, 
+                      random=~1|ID,
+                      data=onevsthreesub)
+
+# omnibus ANOVA
+summary(onevsthreesub_lme)
+anova.lme(onevsthreesub_lme)
+
+
+perm_func("Bayesian","Bayesian","Exp1","Exp3")
+global_boot_2("Bayesian","Bayesian","Exp1","Exp3")
 
 # Experiment 1 vs Experiment 2 Bayes' factor
 x2 = D_tall$measure[D_tall$condition=="Bayesian" & D_tall$Exp=="Exp1"]

@@ -561,6 +561,33 @@ perm_func("BB","BB","Mid","Post","B","B")
 global_boot_2("BB","BB","Mid","Post","B","B")
 # 8.541667 -5.214364 22.297697
 
+##################################
+# BAYES FACTOR ANALYSIS          #
+# COMPARING A-PRE & A-MID,       #
+# B-PRE & B-MID, B-PRE & B-POST, #
+# AND B-MID & B-POST             #
+##################################
+
+## MORE APPROPRIATE METHOD FOR COMPUTING A BAYES' FACTOR ##
+## COMPARING B-PRE AND B-MID IN THE IS CONDITION ##
+a = D_tall$measure[D_tall$condition_names=="BB" & D_tall$objects=="A" & D_tall$phase=="Pre"]
+b = D_tall$measure[D_tall$condition_names=="BB" & D_tall$objects=="A" & D_tall$phase=="Mid"]
+v = D_tall$measure[D_tall$condition_names=="BB" & D_tall$objects=="B" & D_tall$phase=="Pre"]
+x = D_tall$measure[D_tall$condition_names=="BB" & D_tall$objects=="B" & D_tall$phase=="Mid"]
+y = D_tall$measure[D_tall$condition_names=="BB" & D_tall$objects=="B" & D_tall$phase=="Post"]
+
+# a-pre vs. a-mid
+ttestBF(x=a,y=b,paired=TRUE)
+
+# b-pre vs. b-mid
+ttestBF(x=v,y=x,paired=TRUE)
+
+# b-pre vs. b-post
+ttestBF(x=v,y=y,paired=TRUE)
+
+# b-mid vs. b-post
+ttestBF(x=x,y=y,paired=TRUE)
+
 
 
 
